@@ -1,0 +1,10 @@
+*.csproj*
+*.sln
+*.vs
+bin
+obj
+Properties
+config.json
+
+logs/
+application.yml
