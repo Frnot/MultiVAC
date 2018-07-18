@@ -10,7 +10,7 @@ namespace Multivac.Commands
     {
         public DiscordSocketClient _client { get; set; }
 
-        [Command("stop")]
+        [Command("die")]
         [RequireOwner]
         public async Task Stop()
         {
@@ -19,7 +19,7 @@ namespace Multivac.Commands
             Program.Shutdown();
         }
 
-        [Command("restart")]
+        [Command("reload")]
         [RequireOwner]
         public async Task Restart()
         {

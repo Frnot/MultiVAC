@@ -21,7 +21,7 @@ namespace Multivac.Main
 
             _lavalinkManager = lavalinkManager;
 
-            GuildPlaylist = new ConcurrentDictionary<ulong, (List<LavalinkTrack> Tracklist, bool Repeat)>();
+            GuildPlaylist = new ConcurrentDictionary<ulong, (IMessageChannel commandChannel, List< LavalinkTrack>, bool, bool)>();
 
             _lavalinkManager.TrackEnd += OnTrackEndAsync;
             _client.UserVoiceStateUpdated += VoiceStateUpdatedAsync;
@@ -30,15 +30,17 @@ namespace Multivac.Main
         private readonly DiscordSocketClient _client;
         private readonly LavalinkManager _lavalinkManager;
 
-        private readonly ConcurrentDictionary<ulong, (List<LavalinkTrack> Tracklist, bool Repeat)> GuildPlaylist;
+        private readonly ConcurrentDictionary<ulong, (IMessageChannel commandChannel, List<LavalinkTrack> Tracklist, bool PlayingMusicStatus, bool Repeat)> GuildPlaylist;
+
 
         public async Task JoinChannelAsync(SocketCommandContext Context)
         {
+            var textChannel = Context.Channel;
             var voiceChannel = (Context.User as IVoiceState).VoiceChannel;
 
             if (voiceChannel == null)
             {
-                await Context.Channel.SendMessageAsync("you must be in a voice channel");
+                await textChannel.SendMessageAsync("you must be in a voice channel");
                 return;
             }
 
@@ -46,17 +48,16 @@ namespace Multivac.Main
 
             if (player == null) player = await _lavalinkManager.JoinAsync(voiceChannel);
 
-            GuildPlaylist.AddOrUpdate(Context.Guild.Id, (new List<LavalinkTrack>(), false), (key, value) => value);
+            GuildPlaylist.AddOrUpdate(Context.Guild.Id, (textChannel, new List<LavalinkTrack>(), false, false), (key, value) => value);
 
         }
 
-        public async Task<Embed> PlayMusicAsync(ulong guildId)
+        public async Task<Embed> PlayMusicAsync(SocketCommandContext Context)
         {
-            GuildPlaylist.TryGetValue(guildId, out var value);
+            if (!GuildPlaylist.TryGetValue(Context.Guild.Id, out var value)) await JoinChannelAsync(Context);
+            var player = _lavalinkManager.GetPlayer(Context.Guild.Id);
 
-            var player = _lavalinkManager.GetPlayer(guildId);
-
-            
+            value.PlayingMusicStatus = true;
             var track = value.Tracklist.First();
 
             var embed = new EmbedBuilder()
@@ -64,7 +65,7 @@ namespace Multivac.Main
                     $"**Title:** [{track.Title}]({track.Url})\n" +
                     $"**Length:** {track.Length}")
                 .WithThumbnailUrl(ImageURL.YouTubeLogo)
-                .WithColor(255, 255, 255)
+                //.WithColor(255, 255, 255)
                 .Build();
 
             await player.PlayAsync(track);
@@ -78,10 +79,21 @@ namespace Multivac.Main
 
             GuildPlaylist.TryGetValue(guildId, out var value);
 
-            if (!value.Repeat) value.Tracklist.Remove(track); 
+            if (!value.Repeat) value.Tracklist.Remove(track);
+            else value.Repeat = false;
 
-            if (!value.Tracklist.Any()) await DisconnectAsync(guildId);
-            else await PlayMusicAsync(guildId);
+            if (!value.Tracklist.Any()) Console.WriteLine("queue empty"); //wait for more songs
+
+            else await player.PlayAsync(value.Tracklist.First());
+        }
+
+        public async Task StopMusic(ulong guildId)
+        {
+            GuildPlaylist.TryGetValue(guildId, out var value);
+            var player = _lavalinkManager.GetPlayer(guildId);
+
+            await player.StopAsync();
+            value.PlayingMusicStatus = false;
         }
 
         public async Task QueueAsync(string input, ulong guildId)
@@ -102,7 +114,17 @@ namespace Multivac.Main
 
             await player.PauseAsync();
             value.Tracklist.Remove(value.Tracklist.First());
-            await PlayMusicAsync(guildId);
+            await player.PlayAsync(value.Tracklist.First());
+        }
+
+        public async Task<Embed> RepeatSong(ulong guildId)
+        {
+            GuildPlaylist.TryGetValue(guildId, out var value);
+            value.Repeat = true;
+
+            var repeatTrack = value.Tracklist.First();
+
+            return new EmbedBuilder().AddField("Repeating Song", $"Up next: [{repeatTrack.Title}]({repeatTrack.Url})").Build();
         }
 
         public async Task DisconnectAsync(ulong guildId)

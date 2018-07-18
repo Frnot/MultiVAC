@@ -14,8 +14,6 @@ namespace Multivac.Commands
             this.AudioHandler = AudioHandler;
         }
 
-        //private LavalinkPlayer _player;
-        //private LavalinkTrack track;
 
         [Command("play")]
         public async Task PlayMusic([Remainder] string input)
@@ -28,7 +26,13 @@ namespace Multivac.Commands
         [Command("play")]
         public async Task PlayMusic()
         {
-            await ReplyAsync(embed: await AudioHandler.PlayMusicAsync(Context.Guild.Id));
+            await ReplyAsync(embed: await AudioHandler.PlayMusicAsync(Context));
+        }
+
+        [Command("stop")]
+        public async Task StopMusic()
+        {
+            await AudioHandler.StopMusic(Context.Guild.Id);
         }
 
         [Command("queue"), Alias("add")]
@@ -41,6 +45,12 @@ namespace Multivac.Commands
         public async Task SkipSong()
         {
             await AudioHandler.SkipSong(Context.Guild.Id);
+        }
+
+        [Command("repeat")]
+        public async Task RepeatSong()
+        {
+            await AudioHandler.RepeatSong(Context.Guild.Id);
         }
 
 
