@@ -4,7 +4,7 @@
 bin
 obj
 Properties
-#config.json
+config.json
 
 logs/
-#application.yml
+application.yml
