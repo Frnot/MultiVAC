@@ -65,7 +65,7 @@ namespace Multivac.Main
                     $"**Title:** [{track.Title}]({track.Url})\n" +
                     $"**Length:** {track.Length}")
                 .WithThumbnailUrl(ImageURL.YouTubeLogo)
-                //.WithColor(255, 255, 255)
+                .WithColor(255, 255, 255)
                 .Build();
 
             await player.PlayAsync(track);
