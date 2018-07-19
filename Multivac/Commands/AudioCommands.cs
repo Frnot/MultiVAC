@@ -13,67 +13,57 @@ namespace Multivac.Commands
         {
             this.AudioHandler = AudioHandler;
         }
-
-
-        [Command("play")]
-        public async Task PlayMusic([Remainder] string input)
-        {
-            await Join();
-            await QueueSong(input);
-            await PlayMusic();
-        }
-
-        [Command("play")]
-        public async Task PlayMusic()
-        {
-            await ReplyAsync(embed: await AudioHandler.PlayMusicAsync(Context));
-        }
-
-        [Command("stop")]
-        public async Task StopMusic()
-        {
-            await AudioHandler.StopMusic(Context.Guild.Id);
-        }
-
-        [Command("queue"), Alias("add")]
-        public async Task QueueSong([Remainder] string input)
-        {
-            await AudioHandler.QueueAsync(input, Context.Guild.Id);
-        }
-
-        [Command("skip")]
-        public async Task SkipSong()
-        {
-            await AudioHandler.SkipSong(Context.Guild.Id);
-        }
-
-        [Command("repeat")]
-        public async Task RepeatSong()
-        {
-            await AudioHandler.RepeatSong(Context.Guild.Id);
-        }
+        // end Constructor
 
 
         [Command("join")]
         public async Task Join()
-        {
-            await AudioHandler.JoinChannelAsync(Context);
+            => await AudioHandler.JoinChannelAsync(Context);
 
+        [Command("play")]
+        public async Task PlayMusic([Remainder] string input)
+        {
+            await AudioHandler.PlayMusicAsync(Context, input);
         }
+
+        [Command("stop")]
+        public async Task StopMusic()
+            => await AudioHandler.StopMusic(Context.Guild.Id);
+        
+
+        
+
+        [Command("skip")]
+        public async Task SkipSong()
+            => await AudioHandler.SkipSong(Context);
+
+        [Command("loop"), Alias("repeat")]
+        public async Task RepeatSong()
+            => await AudioHandler.RepeatSong(Context.Guild.Id);
+
+
+        
 
         [Command("leave")]
         public async Task Leave()
+            => await AudioHandler.DisconnectAsync(Context.Guild.Id);
+
+
+
+
+
+
+        [Command("showqueue"), Alias("songlist", "songs")]
+        public async Task ShowTrackList([Remainder] string input)
         {
-            await AudioHandler.DisconnectAsync(Context.Guild.Id);
+            //todo
         }
 
         [Command("volume")]
-        [RequireUserPermission(GuildPermission.Administrator, Group = "perms")]
+        //[RequireUserPermission(GuildPermission.Administrator, Group = "perms")]
         [RequireOwner(Group = "perms")]
         public async Task Volume(int volume)
-        {
-            await AudioHandler.SetVolumeAsync(Context.Guild.Id, volume);
-        }
+            => await AudioHandler.SetVolumeAsync(Context.Guild.Id, volume);
 
     }
 }
