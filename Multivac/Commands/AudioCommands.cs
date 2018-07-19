@@ -28,21 +28,20 @@ namespace Multivac.Commands
 
         [Command("stop")]
         public async Task StopMusic()
-            => await AudioHandler.StopMusic(Context.Guild.Id);
+            => await AudioHandler.StopMusicAsync(Context.Guild.Id);
+
+        [Command("restart")]
+        public async Task RestartSong()
+            => await AudioHandler.RestartSongAsync(Context);
         
 
-        
-
-        [Command("skip")]
+        [Command("skip"), Alias("next")]
         public async Task SkipSong()
-            => await AudioHandler.SkipSong(Context);
+            => await AudioHandler.SkipSongAsync(Context);
 
         [Command("loop"), Alias("repeat")]
         public async Task RepeatSong()
-            => await AudioHandler.RepeatSong(Context.Guild.Id);
-
-
-        
+            => await AudioHandler.RepeatSongAsync(Context.Guild.Id);
 
         [Command("leave")]
         public async Task Leave()
@@ -50,11 +49,16 @@ namespace Multivac.Commands
 
 
 
+        [Command("nowplaying", RunMode = RunMode.Async), Alias("np", "currentsong", "currenttrack")]
+        public async Task NowPlaying()
+            => await AudioHandler.NowPlayingAsync(Context);
 
-
+        [Command("upnext"), Alias("nextsong", "nexttrack")]
+        public async Task UpNext()
+            => await AudioHandler.UpNextAsync(Context);
 
         [Command("showqueue"), Alias("songlist", "songs")]
-        public async Task ShowTrackList([Remainder] string input)
+        public async Task ShowTrackList()
         {
             //todo
         }
