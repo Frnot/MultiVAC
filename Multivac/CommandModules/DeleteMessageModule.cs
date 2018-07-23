@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Multivac.Modules
+namespace Multivac.CommandModules
 {
     public class DeleteMessageModule : ModuleBase<SocketCommandContext>
     {

@@ -2,7 +2,7 @@
 using Multivac.Utilities;
 using System.Threading.Tasks;
 
-namespace Multivac.Modules
+namespace Multivac.CommandModules
 {
     public class GeneralCommands : ModuleBase<SocketCommandContext>
     {

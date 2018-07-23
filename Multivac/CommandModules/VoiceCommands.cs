@@ -1,6 +1,6 @@
 ﻿using Discord.Commands;
 
-namespace Multivac.Modules
+namespace Multivac.CommandModules
 {
     public class VoiceCommands : ModuleBase<SocketCommandContext>
     {

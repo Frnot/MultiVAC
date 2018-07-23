@@ -1,5 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
+﻿using Discord.Commands;
 using Multivac.Main;
 using System.Threading.Tasks;
 
@@ -27,6 +26,7 @@ namespace Multivac.Commands
         }
 
         [Command("stop")]
+        [RequireOwner]
         public async Task StopMusic()
             => await AudioHandler.StopMusicAsync(Context.Guild.Id);
 
@@ -59,9 +59,11 @@ namespace Multivac.Commands
 
         [Command("showqueue"), Alias("songlist", "songs")]
         public async Task ShowTrackList()
-        {
-            //todo
-        }
+            => await AudioHandler.ShowQueueAsync(Context);
+
+        [Command("volume")]
+        public async Task Volume()
+            => await AudioHandler.ShowVolumeAsync(Context);
 
         [Command("volume")]
         //[RequireUserPermission(GuildPermission.Administrator, Group = "perms")]
@@ -69,5 +71,12 @@ namespace Multivac.Commands
         public async Task Volume(int volume)
             => await AudioHandler.SetVolumeAsync(Context.Guild.Id, volume);
 
+        [Command("status")]
+        public async Task getTask()
+            => await AudioHandler.GetStatusAsync(Context);
+
+        [Command("allstats")]
+        public async Task AllStats()
+            => await AudioHandler.DumpCollection(Context);
     }
 }

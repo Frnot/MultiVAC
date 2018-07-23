@@ -7,7 +7,7 @@ namespace Multivac
 {
     public class Variables
     {
-        public readonly static string ProgramVersion = "beta 4.0.0";
+        public readonly static string ProgramVersion = "4.1.0";
 
         public static string DiscordToken { get; private set; }
         public static string DefaultCommandPrefix { get; private set; }
@@ -22,7 +22,7 @@ namespace Multivac
             DefaultCommandPrefix = JsonConfig.CommandPrefix.ToString();
             GoogleAPIKey = JsonConfig.GoogleApiKey.ToString();
 
-            //EmojiPattern = File.ReadAllText("emojipattern.txt");
+            EmojiPattern = File.ReadAllText("emojipattern.txt");
 
             return Task.CompletedTask;
         } // end LoadConfig

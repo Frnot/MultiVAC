@@ -4,18 +4,13 @@ using System;
 using System.Threading.Tasks;
 using LiteDB;
 using Multivac.Data;
+using System.IO;
 
-namespace Multivac.Modules
+namespace Multivac.Main
 {
     public class AdminCommands : ModuleBase<SocketCommandContext>
     {
-        private readonly DatabaseHandler _databaseHandler;
-
-        public AdminCommands(DatabaseHandler databaseHandler)
-        {
-            _databaseHandler = databaseHandler;
-        }
-
+        public CommandHandler _commandHandler { get; set; }
 
         [Command("nuke")]
         [RequireUserPermission(ChannelPermission.ManageChannels, Group = "perms")]
@@ -54,32 +49,22 @@ namespace Multivac.Modules
         [Command("prefix")]
         [RequireUserPermission(GuildPermission.Administrator, Group = "perms")]
         [RequireOwner(Group = "perms")]
-        public async Task ChangePrefix(string newPrefix)
+        public async Task ChangePrefix([Remainder] string newPrefix)
         {
-            using (var db = new LiteDatabase(@"GuildData.db"))
-            {
-                if (string.IsNullOrEmpty(newPrefix)) return;
-
-                var guildList = db.GetCollection<GuildData>("guilds");
-                var thisGuild = guildList.FindOne(x => x.GuildId == Context.Guild.Id);
-
-                if (newPrefix.ToLower().Equals("reset"))
-                {
-                    thisGuild.CommandPrefix = "";
-                    await ReplyAsync($"the command prefix has been reset.");
-                }
-                else
-                {
-                    thisGuild.CommandPrefix = newPrefix;
-                    await ReplyAsync($"the command prefix has been changed.");
-                }
-                guildList.Update(thisGuild);
-
-                await ReplyAsync($"the command prefix for {Context.Guild} is now `{_databaseHandler.GetGuildPrefix(Context.Guild.Id)}`");
-            }
+            await _commandHandler.ChangeGuildPrefixAsync(Context, newPrefix);
         } // end ChangePrefix(string)
 
-        
+        [Command("prefix")]
+        public async Task ChangePrefix()
+        {
+            string prefix = _commandHandler.GetGuildPrefix(Context.Guild.Id);
+
+            await ReplyAsync(embed: new EmbedBuilder()
+                .WithDescription($"{Context.User.Mention} the command prefix for {Context.Guild.Name} is `{prefix}`")
+                //.WithColor(RandomColor.NoGrays())
+                .Build());
+        }
+
 
         [Command("spam")]
         [RequireOwner]
@@ -93,8 +78,19 @@ namespace Multivac.Modules
 
         [Command("test")]
         [RequireOwner]
-        public async Task Test([Remainder] string input)
+        public async Task Test()
         {
+            await ReplyAsync("testing");
+
+            var fileName = "image.png";
+
+            var embed = new EmbedBuilder()
+            {
+                Title = "picture",
+                Description = "yeet boi",
+                ThumbnailUrl = $"attachment://{fileName}"
+            }.Build();
+            await Context.Channel.SendFileAsync($"pictures/{fileName}", embed: embed);
         }
 
 

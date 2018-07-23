@@ -2,6 +2,7 @@
 using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
+using LiteDB;
 using Microsoft.Extensions.DependencyInjection;
 using Multivac.Data;
 using SharpLink;
@@ -16,10 +17,12 @@ namespace Multivac.Main
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly LavalinkManager _lavalinkManager;
+        private readonly LiteDatabase _dbService;
         private readonly IServiceProvider _services;
 
         public RunBot(DiscordSocketClient client = null, CommandService commands = null, 
-                      LavalinkManager lavalinkManager = null, IServiceProvider services = null)
+                      LavalinkManager lavalinkManager = null, IServiceProvider services = null,
+                      LiteDatabase dbService = null)
         {
             _client = client ?? new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -46,10 +49,13 @@ namespace Multivac.Main
                 //TotalShards = 1
             });
 
+            _dbService = dbService ?? new LiteDatabase(@"GuildData.db");
+
             _services = services ?? new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
                 .AddSingleton(_lavalinkManager)
+                .AddSingleton(_dbService)
                 .AddSingleton<InteractiveService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<DatabaseHandler>()

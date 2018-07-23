@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using System.Threading.Tasks;
 
-namespace Multivac.Modules
+namespace Multivac.CommandModules
 {
     public class RPCCommands : ModuleBase<SocketCommandContext>
     {

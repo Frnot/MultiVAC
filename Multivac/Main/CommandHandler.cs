@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using LiteDB;
 using Multivac.Data;
 using System;
 using System.Reflection;
@@ -13,14 +14,14 @@ namespace Multivac.Main
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
-        private readonly DatabaseHandler _databaseHandler;
+        private readonly LiteDatabase db;
 
-        public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider services, DatabaseHandler databaseHandler)
+        public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider services, LiteDatabase dbService)
         {
             _client = client;
             _commands = commands;
             _services = services;
-            _databaseHandler = databaseHandler;
+            db = dbService;
         } // end Constructor
 
         public async Task InitializeCommandsAsync()
@@ -30,8 +31,6 @@ namespace Multivac.Main
             _commands.Log += RunBot.Log;
 
             _client.MessageReceived += HandleCommandAsync;
-            _client.MessageUpdated += MessageUpdatedAsync;
-
         } // end InitCommands
 
         private async Task HandleCommandAsync(SocketMessage arg)
@@ -41,7 +40,7 @@ namespace Multivac.Main
 
             var context = new SocketCommandContext(_client, message);
 
-            string botPrefix = _databaseHandler.GetGuildPrefix(context.Guild.Id);
+            string botPrefix = GetGuildPrefix(context.Guild.Id);
             
             int argPos = 0;
             if (!(message.HasStringPrefix(botPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
@@ -52,11 +51,40 @@ namespace Multivac.Main
 
         } // end HandleCommandAsync()
 
-        private async Task MessageUpdatedAsync(Cacheable<IMessage, ulong> beforeEdit, SocketMessage afterEdit, ISocketMessageChannel channel)
+
+
+        public string GetGuildPrefix(ulong guildId)
         {
-            //let admins turn this on/off per guild
-            await HandleCommandAsync(afterEdit);
-        } // end MessageUpdatesAsync()
+            var guilds = db.GetCollection<GuildData>("guilds");
+
+            var guild = guilds.FindOne(x => x.GuildId == guildId);
+
+            var thisGuildPrefix = guild.CommandPrefix;
+
+            return (thisGuildPrefix == "default") ? Variables.DefaultCommandPrefix : thisGuildPrefix;
+        } // end GetGuildPrefix
+
+        public async Task ChangeGuildPrefixAsync(SocketCommandContext Context, string newPrefix)
+        {
+            if (string.IsNullOrEmpty(newPrefix)) return;
+
+            var guildList = db.GetCollection<GuildData>("guilds");
+            var thisGuild = guildList.FindOne(x => x.GuildId == Context.Guild.Id);
+
+            if (newPrefix.ToLower().Equals("reset"))
+            {
+                thisGuild.CommandPrefix = "";
+                await Context.Channel.SendMessageAsync($"the command prefix has been reset.");
+            }
+            else
+            {
+                thisGuild.CommandPrefix = newPrefix;
+                await Context.Channel.SendMessageAsync($"the command prefix has been changed.");
+            }
+            guildList.Update(thisGuild);
+
+            await Context.Channel.SendMessageAsync($"the command prefix for {Context.Guild.Name} is now `{GetGuildPrefix(Context.Guild.Id)}`");
+        } // end ChangeGuildPrefixAsync
 
     }
 }

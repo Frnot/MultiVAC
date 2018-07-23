@@ -59,15 +59,7 @@ namespace Multivac.Commands
             await Context.Channel.SendMessageAsync("", embed: embed.Build());
         } // end GuildInfo
 
-        [Command("prefix")]
-        public async Task ChangePrefix()
-        {
-            string prefix = _databaseHandler.GetGuildPrefix(Context.Guild.Id);
-
-            await ReplyAsync(embed: new EmbedBuilder()
-                .WithDescription($"{Context.User.Mention} the command prefix for {Context.Guild.Name} is `{prefix}`")
-                .WithColor(RandomColor.NoGrays()).Build());
-        }
+        
 
         [Command("userinfo")]
         public async Task UserInfo(string input = null)

@@ -1,14 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using Multivac.Utilities;
-using SharpLink;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Multivac.Main
@@ -59,6 +51,56 @@ namespace Multivac.Main
                     $"**Length:** {nextTrack.Length}\n" +
                     $"**Requested by:** {requester.Mention}")
                 .Build());
+        }
+
+
+        public async Task ShowVolumeAsync(SocketCommandContext Context)
+        {
+            var player = _lavalinkManager.GetPlayer(Context.Guild.Id);
+
+            if (player == null)
+            {
+                await Context.Channel.SendMessageAsync(embed: new EmbedBuilder()
+                    .AddField("Error", "Player does not exist in theis guild")
+                    .Build());
+                return;
+            }
+
+            await Context.Channel.SendMessageAsync($"Volume is set to (grab volume from db)");
+        }
+
+        public async Task ShowQueueAsync(SocketCommandContext Context)
+        {
+            GuildPlaylist.TryGetValue(Context.Guild.Id, out var value);
+
+            var tracknames = value.Tracklist.Select(x => x.track.Title).ToArray();
+
+            await Context.Channel.SendMessageAsync($"```{string.Join('\n', tracknames)}```");
+        }
+
+        public async Task GetStatusAsync(SocketCommandContext Context)
+        {
+            var player = _lavalinkManager.GetPlayer(Context.Guild.Id);
+            var result = GuildPlaylist.TryGetValue(Context.Guild.Id, out var value);
+            var channel = Context.Channel;
+
+            if (player == null) await channel.SendMessageAsync("player is null");
+            if (!result) await channel.SendMessageAsync("TryGetGuild failed");
+
+            await channel.SendMessageAsync($"isPlaying status: {value.IsPlaying}");
+        }
+
+        public async Task DumpCollection(SocketCommandContext Context)
+        {
+            foreach (var guild in GuildPlaylist)
+            {
+                await Context.Channel.SendMessageAsync("```" +
+                    $"Guild: {_client.GetGuild(guild.Key).Name}" +
+                    $"bound channel id: {guild.Value.boundChannel}" +
+                    $"Is playing: {guild.Value.IsPlaying}" +
+                    $"Repeat: {guild.Value.Repeat}" +
+                    "```");
+            }
         }
 
 

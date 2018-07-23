@@ -9,10 +9,12 @@ namespace Multivac.Data
     public class DatabaseHandler
     {
         private readonly DiscordSocketClient _client;
+        private readonly LiteDatabase db;
 
-        public DatabaseHandler(DiscordSocketClient client)
+        public DatabaseHandler(DiscordSocketClient client, LiteDatabase dbService)
         {
             _client = client;
+            db = dbService;
 
             _client.JoinedGuild += (g) => AddGuildToDb(g.Id);
             _client.LeftGuild += (g) => RemoveGuildFromDb(g.Id);
@@ -22,50 +24,46 @@ namespace Multivac.Data
         {
             Console.WriteLine("Syncing Database...");
 
-            using (var db = new LiteDatabase(@"GuildData.db"))
+            var dbGuilds = db.GetCollection<GuildData>("guilds");
+
+            // check that database contains all existing guilds
+            foreach (var guild in _client.Guilds)
             {
-                var dbGuilds = db.GetCollection<GuildData>("guilds");
-
-                // check that database contains all existing guilds
-                foreach (var guild in _client.Guilds)
+                if (!dbGuilds.Exists(x => x.GuildId == guild.Id))
                 {
-                    if (!dbGuilds.Exists(x => x.GuildId == guild.Id))
-                    {
-                        Console.WriteLine("found missing guild");
-                        AddGuildToDb(guild.Id);
-                    }
+                    Console.WriteLine("found missing guild");
+                    AddGuildToDb(guild.Id);
                 }
+            }
 
-                // check if the database contains guilds that no longer exist
-                foreach (var dbGuild in dbGuilds.FindAll())
+            // check if the database contains guilds that no longer exist
+            foreach (var dbGuild in dbGuilds.FindAll())
+            {
+                if (!_client.Guilds.Any(g => g.Id == dbGuild.GuildId))
                 {
-                    if (!_client.Guilds.Any(g => g.Id == dbGuild.GuildId))
-                    {
-                        Console.WriteLine("found non-existent guild");
-                        RemoveGuildFromDb(dbGuild.GuildId);
-                    }
+                    Console.WriteLine("found non-existent guild");
+                    RemoveGuildFromDb(dbGuild.GuildId);
                 }
             }
         } // end SyncDatabase
 
         public Task AddGuildToDb(ulong guildId)
         {
-            using (var db = new LiteDatabase(@"GuildData.db"))
+            var dbGuilds = db.GetCollection<GuildData>("guilds");
+
+            var guild = _client.GetGuild(guildId);
+            Console.WriteLine(guild.Name);
+
+            var newGuild = new GuildData
             {
-                var dbGuilds = db.GetCollection<GuildData>("guilds");
+                GuildId = guild.Id,
+                Name = guild.Name,
+                CommandPrefix = "default",
 
-                var guild = _client.GetGuild(guildId);
-                Console.WriteLine(guild.Name);
+                Volume = 100,
+            };
 
-                var newGuild = new GuildData
-                {
-                    GuildId = guild.Id,
-                    Name = guild.Name,
-                    CommandPrefix = Variables.DefaultCommandPrefix,
-                };
-
-                dbGuilds.Insert(newGuild);
-            }
+            dbGuilds.Insert(newGuild);
             return Task.CompletedTask;
         }
 
@@ -80,21 +78,7 @@ namespace Multivac.Data
             return Task.CompletedTask;
         }
 
-        public string GetGuildPrefix(ulong guildId)
-        {
-            using (var db = new LiteDatabase(@"GuildData.db"))
-            {
-                bool trueisgood = db.CollectionExists("guilds");
-
-                var guilds = db.GetCollection<GuildData>("guilds");
-
-                var guild = guilds.FindOne(x => x.GuildId == guildId);
-
-                var thisGuildPrefix = guild.CommandPrefix;
-
-                return String.IsNullOrEmpty(thisGuildPrefix) ? Variables.DefaultCommandPrefix : thisGuildPrefix;
-            }
-        } // end GetGuildPrefix
+        
 
     } // end class Databasehandler
 }
