@@ -9,11 +9,13 @@ namespace Multivac.Commands
     public class OwnerCommands : ModuleBase<SocketCommandContext>
     {
         public DiscordSocketClient _client { get; set; }
+        public AudioService _audioService { get; set; }
 
         [Command("die")]
         [RequireOwner]
         public async Task Stop()
         {
+            await _audioService.DisconAllPlayersAsync();
             await _client.SetStatusAsync(UserStatus.Invisible);
             await _client.StopAsync();
             Program.Shutdown();
@@ -23,8 +25,9 @@ namespace Multivac.Commands
         [RequireOwner]
         public async Task Restart()
         {
+            await _audioService.DisconAllPlayersAsync();
             await _client.StopAsync();
-            await RunBot.Instance.Startup();
+            await Program.Bot.Startup();
             await _client.StartAsync();
         }
     }

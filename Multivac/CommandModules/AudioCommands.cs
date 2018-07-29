@@ -6,9 +6,9 @@ namespace Multivac.Commands
 {
     public class AudioCommands : ModuleBase<SocketCommandContext>
     {
-        private readonly AudioHandler AudioHandler;
+        private readonly AudioService AudioHandler;
 
-        public AudioCommands(AudioHandler AudioHandler)
+        public AudioCommands(AudioService AudioHandler)
         {
             this.AudioHandler = AudioHandler;
         }
@@ -70,13 +70,5 @@ namespace Multivac.Commands
         [RequireOwner(Group = "perms")]
         public async Task Volume(int volume)
             => await AudioHandler.SetVolumeAsync(Context.Guild.Id, volume);
-
-        [Command("status")]
-        public async Task getTask()
-            => await AudioHandler.GetStatusAsync(Context);
-
-        [Command("allstats")]
-        public async Task AllStats()
-            => await AudioHandler.DumpCollection(Context);
     }
 }

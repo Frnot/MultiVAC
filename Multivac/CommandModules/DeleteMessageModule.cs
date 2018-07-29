@@ -227,8 +227,8 @@ namespace Multivac.CommandModules
                 else if (findEmbeds && message.Embeds.Any())
                     matchedMessages.Add(message);
 
-                else if (findPins) ;
-
+                else if (findPins && message.IsPinned)
+                    matchedMessages.Add(message);
 
                 else if (findEmojis && (message.Tags.Any(tag => tag.Type == TagType.Emoji) || Regex.IsMatch(message.Content, Variables.EmojiPattern)))
                     matchedMessages.Add(message);
@@ -236,14 +236,9 @@ namespace Multivac.CommandModules
                 else if (findImages && message.Attachments != null)
                     matchedMessages.Add(message);
 
-                else if (findLinks) ;
-
+                else if (findLinks && new Regex("(?i)https?://").IsMatch(message.Content))
+                    matchedMessages.Add(message);
             }; // end foreach
-
-            foreach (var message in matchedMessages)
-            {
-                Console.WriteLine(message);
-            }
 
             return matchedMessages;
         } // end ParseEachMessage
@@ -255,17 +250,6 @@ namespace Multivac.CommandModules
             var twoWeeksAgo = DateTime.Now.AddDays(-14);
 
             return messages.Where(m => m.Timestamp >= twoWeeksAgo);
-            /*
-            if (messages.Any(m => m.Timestamp < twoWeeksAgo))
-            {
-                Console.WriteLine("too old"); //test
-                 //just do this line
-            }
-            else //(messages.Any(m => m.Timestamp >= twoWeeksAgo))
-            {
-                Console.WriteLine("young enough"); //test
-                return messages;
-            } */
         }
 
 

@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace Multivac.Main
 {
-    public partial class AudioHandler
+    public partial class AudioService
     {
         private readonly DiscordSocketClient _client;
         private readonly LavalinkManager _lavalinkManager;
         private readonly ConcurrentDictionary<ulong, (IMessageChannel boundChannel, Queue<(LavalinkTrack track, ulong requesterId)> Tracklist, bool IsPlaying, bool Repeat)> GuildPlaylist;
 
-        public AudioHandler(DiscordSocketClient client, LavalinkManager lavalinkManager)
+        public AudioService(DiscordSocketClient client, LavalinkManager lavalinkManager)
         {
             _client = client;
 
@@ -215,6 +215,16 @@ namespace Multivac.Main
                 Console.WriteLine("fire");
                 await (socketUser as IGuildUser).ModifyAsync(x => { x.Mute = false; x.Deaf = false; });
             }
+        }
+
+        public async Task DisconAllPlayersAsync()
+        {
+            foreach (var guild in GuildPlaylist)
+            {
+                await DisconnectAsync(guild.Key);
+            }
+            await _lavalinkManager.StopAsync();
+            Console.WriteLine("All voice players disconnected");
         }
 
     } // end class AudioHandler

@@ -13,7 +13,6 @@ namespace Multivac.Main
 {
     public class RunBot
     {
-        public static readonly RunBot Instance = new RunBot();
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly LavalinkManager _lavalinkManager;
@@ -59,7 +58,7 @@ namespace Multivac.Main
                 .AddSingleton<InteractiveService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<DatabaseHandler>()
-                .AddSingleton<AudioHandler>()
+                .AddSingleton<AudioService>()
                 .BuildServiceProvider();
 
         } // end Constructor
