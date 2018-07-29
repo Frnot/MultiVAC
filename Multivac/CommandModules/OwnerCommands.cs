@@ -21,14 +21,14 @@ namespace Multivac.Commands
             Program.Shutdown();
         }
 
-        [Command("reload")]
+        [Command("undie")]
         [RequireOwner]
         public async Task Restart()
         {
             await _audioService.DisconAllPlayersAsync();
+            await _client.SetStatusAsync(UserStatus.Invisible);
             await _client.StopAsync();
-            await Program.Bot.Startup();
-            await _client.StartAsync();
+            Program.Restart();
         }
     }
 }

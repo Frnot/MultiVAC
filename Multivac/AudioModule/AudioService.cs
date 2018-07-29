@@ -227,5 +227,5 @@ namespace Multivac.Main
             Console.WriteLine("All voice players disconnected");
         }
 
-    } // end class AudioHandler
+    } // end class _audioService
 }
