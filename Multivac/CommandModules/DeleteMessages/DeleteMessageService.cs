@@ -1,60 +1,29 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Multivac.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Multivac.CommandModules
 {
-    public class DeleteMessageModule : ModuleBase<SocketCommandContext>
+    class DeleteMessageService
     {
-        [Command("delete")]
-        [RequireUserPermission(ChannelPermission.ManageMessages, Group = "perms")]
-        [RequireOwner(Group = "perms")]
-        public async Task Delete(int numToDelete)
-        {
-            IEnumerable<IMessage> messages;
+        private string InfoMessage;
+        private bool filterMessages = false;
 
-            if (numToDelete == 0) messages = await FindAllMessagesAsync(Context);
-            else messages = await FindMessagesAsync(Context, numToDelete);
-
-            await DeleteMessages(Context, messages);
-        }
-
-        [Command("delete")]
-        [RequireUserPermission(ChannelPermission.ManageMessages, Group = "perms")]
-        [RequireOwner(Group = "perms")]
-        public async Task Delete(int numToDelete, [Remainder] string stringIn)
-        {
-            IEnumerable<IMessage> messages;
-
-            await ParseDeleteCommandAsync(Context, stringIn);
-            if (await CheckParamConflict())
-            {
-                await ReplyAsync("error: parameter conflict");
-                return;
-            }
-
-            if (numToDelete == 0) messages = await FindAllMessagesAsync(Context);
-            else messages = await FindMessagesAsync(Context, numToDelete);
-
-            await DeleteMessages(Context, messages);
-
-        } // end delete
-
-
-        private  string InfoMessage;
-        private bool findEveryType = true;
         private bool findUser = false;
         private List<SocketGuildUser> userAuthors = new List<SocketGuildUser>();
+
         private bool findRole = false;
         private List<SocketRole> roleAuthors = new List<SocketRole>();
+
         private bool findString { get; set; }
         private List<string> phrases = new List<string>();
+
         private bool findBots = false;
         private bool findHumans = false;
         private bool findText = false;
@@ -65,24 +34,44 @@ namespace Multivac.CommandModules
         private bool findImages = false;
         private bool findLinks = false;
 
-        private async Task ParseDeleteCommandAsync(SocketCommandContext Context, string input)
+        private Direction _direction = Direction.Before;
+        private IMessage commandMessage;
+
+
+
+        public async Task ParseDeleteCommandAsync(SocketCommandContext Context, string input)
         {
-            Console.WriteLine("parsedeletecommand running...");
+            commandMessage = (await Context.Channel.GetMessagesAsync(1).FlattenAsync()).First();
+
+            var options = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "bots",
+                "humans",
+                "text",
+                "mentions",
+                "embeds",
+                "pins",
+                "emojis",
+                "images",
+                "links",
+                "before",
+                "after"
+            };
 
             string message = input.ToLower();
 
-            userAuthors = MentionParser.GetUsersFromString(Context.Guild, input);
-            if (userAuthors.Count > 0)
+            userAuthors = ParseDiscordUser.FromAny(Context.Guild, input);
+            if (userAuthors != null)
             {
-                findEveryType = false;
+                filterMessages = true;
                 findUser = true;
             }
 
             if (new Regex("<@&([0-9]*)>").IsMatch(message))
             {
-                findEveryType = false;
+                filterMessages = true;
                 findRole = true;
-                var matches = new Regex("<@&([0-9]*)>").Matches(message).ToList();
+                var matches = new Regex("<@&([0-9]*)>").Matches(message);
                 foreach (var match in matches)
                 {
                     var ID = Regex.Replace(match.ToString(), "[<@&>]", "");
@@ -92,20 +81,16 @@ namespace Multivac.CommandModules
 
             if (new Regex("\".*?\"").IsMatch(message))
             {
-                findEveryType = false;
+                filterMessages = true;
                 findString = true;
-                var matches = new Regex("\".*?\"").Matches(message).ToList();
+                var matches = new Regex("\".*?\"").Matches(message);
                 foreach (var match in matches)
                 {
                     phrases.Add(match.ToString().Replace("\"", ""));
                 }
             }
 
-            List<string> allParams = new List<string>()
-            {
-                "bots", "humans", "text", "mentions", "embeds", "pins", "emojis", "images", "links"
-            };
-            if (allParams.Any(param => message.Contains(param))) findEveryType = false;
+            if (options.Any(o => message.Contains(o))) filterMessages = true;
 
             if (message.Contains("bots")) findBots = true;
             if (message.Contains("humans")) findHumans = true;
@@ -117,61 +102,42 @@ namespace Multivac.CommandModules
             if (message.Contains("images")) findImages = true;
             if (message.Contains("links")) findLinks = true;
 
+            if (message.Contains("before"))
+            {
+                _direction = Direction.Before;
+                //parse for message id
+                //startMessage =
+            }
+            if (message.Contains("after"))
+            {
+                _direction = Direction.After;
+                //parse for message id
+                //startMessage =
+            }
+
             foreach (var phrase in phrases)
             {
                 Console.WriteLine(phrase);//test
             }
         } // end ParseDeleteCommandAsync
 
-        private async Task<bool> CheckParamConflict()
+        public async Task<bool> CheckParamConflict()
         {
             if (findBots && findHumans) return true;
             return false;
         } // end CheckParamConflict
 
-
-        private async Task<IEnumerable<IMessage>> FindAllMessagesAsync(SocketCommandContext Context)
+        public async Task<IEnumerable<IMessage>> DownloadMessagesAsync(SocketCommandContext Context, int numToDelete)
         {
-            Console.WriteLine("running FindAllMessagesAsync...");//test
+            if (numToDelete == 0) numToDelete = int.MaxValue;
 
             List<IMessage> matchedMessages = new List<IMessage>();
 
-            IMessage deleteCommand = (await Context.Channel.GetMessagesAsync(1).FlattenAsync()).First();
-            var lastMessage = deleteCommand;
-            await Context.Channel.DeleteMessageAsync(deleteCommand);
-            while (true)
-            {
-                var messages = await Context.Channel.GetMessagesAsync(lastMessage, Direction.Before).FlattenAsync();
-                if (messages.Count() > 0) lastMessage = messages.Last();
-                else
-                {
-                    InfoMessage = "all messages deleted";
-                    break;
-                }
-
-                if (findEveryType) matchedMessages.AddRange(messages.ToList());
-
-                else matchedMessages.AddRange(ParseEachMessage(messages));
-            }
-            return TrimOldMessages(matchedMessages);
-        } // end FindAllMessagesAsync
-
-
-        private async Task<IEnumerable<IMessage>> FindMessagesAsync(SocketCommandContext Context, int numToDelete)
-        {
-            Console.WriteLine("running FindMessagesAsync...");//test
-            Console.WriteLine($"find every type? : {findEveryType}");//test
-
-            List<IMessage> matchedMessages = new List<IMessage>();
-
-            IMessage deleteCommand = (await Context.Channel.GetMessagesAsync(1).FlattenAsync()).First();
-            var lastMessage = deleteCommand;
-            await Context.Channel.DeleteMessageAsync(deleteCommand);
+            var lastMessage = commandMessage;
+            await Context.Channel.DeleteMessageAsync(commandMessage);
             while (matchedMessages.Count < numToDelete)
             {
-                var messages = await Context.Channel.GetMessagesAsync(lastMessage, Direction.Before).FlattenAsync();
-                Console.WriteLine($"message count: {messages.Count()}");//test
-
+                var messages = await Context.Channel.GetMessagesAsync(lastMessage, _direction).FlattenAsync();
                 if (messages.Count() > 0) lastMessage = messages.Last();
                 else
                 {
@@ -181,26 +147,23 @@ namespace Multivac.CommandModules
 
                 Console.WriteLine($"how many to take {numToDelete - matchedMessages.Count()}");//test
 
-
-                if (findEveryType) matchedMessages.AddRange(messages.ToList().Take(numToDelete - matchedMessages.Count()));
-
-                else matchedMessages.AddRange(ParseEachMessage(messages, (numToDelete - matchedMessages.Count())));
+                messages = TrimOldMessages(messages, out bool foundOldMessage);
+                matchedMessages.AddRange(FilterMessages(messages.ToList().Take(numToDelete - matchedMessages.Count())));
+                if (foundOldMessage) break;
             }
-            return TrimOldMessages(matchedMessages);
+            return matchedMessages;
         } // end FindMessagesAsync
 
 
 
-        private IEnumerable<IMessage> ParseEachMessage(IEnumerable<IMessage> messages, int numToParse = 100)
+        private IEnumerable<IMessage> FilterMessages(IEnumerable<IMessage> messages)
         {
-            Console.WriteLine("running ParseEachMessage...");//test
-            Console.WriteLine($"how many messages: {messages.Count()}");//test
-
             List<IMessage> matchedMessages = new List<IMessage>();
+
+            if (!filterMessages) return messages.ToList();
+
             foreach (var message in messages)
             {
-                if (matchedMessages.Count() == numToParse) break;
-
                 if (findUser && userAuthors.Contains(message.Author))
                     matchedMessages.Add(message);
 
@@ -245,17 +208,22 @@ namespace Multivac.CommandModules
 
 
 
-        private IEnumerable<IMessage> TrimOldMessages(IEnumerable<IMessage> messages)
+        private IEnumerable<IMessage> TrimOldMessages(IEnumerable<IMessage> messages, out bool foundOldMessage)
         {
             var twoWeeksAgo = DateTime.Now.AddDays(-14);
 
-            return messages.Where(m => m.Timestamp >= twoWeeksAgo);
+            var trimmedMessages = messages.Where(m => m.Timestamp >= twoWeeksAgo);
+
+            if (trimmedMessages.Count() < messages.Count()) foundOldMessage = true;
+            else foundOldMessage = false;
+
+            return trimmedMessages;
         }
 
 
 
 
-        private async Task DeleteMessages(SocketCommandContext Context, IEnumerable<IMessage> messages)
+        public async Task DeleteMessages(SocketCommandContext Context, IEnumerable<IMessage> messages)
         {
             var channel = Context.Channel as ITextChannel;
 

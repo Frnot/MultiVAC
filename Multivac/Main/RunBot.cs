@@ -25,13 +25,13 @@ namespace Multivac.Main
         {
             _client = client ?? new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Info,
+                LogLevel = LogSeverity.Verbose,
                 MessageCacheSize = 50,
             });
 
             _commands = commands ?? new CommandService(new CommandServiceConfig
             {
-                LogLevel = LogSeverity.Info,
+                LogLevel = LogSeverity.Verbose,
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async
             });

@@ -8,6 +8,9 @@ namespace Multivac.Utilities
 {
     public static class MentionParser
     {
+        //deprecated
+
+/*
         public static SocketGuildUser GetUserFromString(SocketGuild guild, string input)
         {
             var mentionUser = UserFromMention(guild, input).First();
@@ -86,6 +89,6 @@ namespace Multivac.Utilities
             if (users.Count == 1) return null;
             else return users;
         }
-
+        */
     }
 }

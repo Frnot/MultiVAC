@@ -68,12 +68,12 @@ namespace Multivac.Commands
             if (input == null) user = Context.Message.Author as SocketGuildUser;
             else
             {
-                var u = MentionParser.GetUserFromString(Context.Guild, input);
-                if (u != null) user = u;
-                else return; //error
+                //var u = MentionParser.GetUserFromString(Context.Guild, input);
+                //if (u != null) user = u;
+                //else return; //error
             }
 
-            await ReplyAsync($"@{user.Username}'s account was created on {user.CreatedAt})");
+            //await ReplyAsync($"@{user.Username}'s account was created on {user.CreatedAt})");
         } // end UserInfo
 
         [Command("whojoined")]

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LiteDB;
 using Multivac.Data;
 using System.IO;
+using Discord.WebSocket;
 
 namespace Multivac.Main
 {
@@ -78,19 +79,20 @@ namespace Multivac.Main
 
         [Command("test")]
         [RequireOwner]
-        public async Task Test()
+        public async Task Test(SocketGuildUser user)
         {
-            await ReplyAsync("testing");
+            await ReplyAsync($"username: {user.Username}");
+            await ReplyAsync($"nickname: {user.Nickname}");
 
-            var fileName = "image.png";
+            //var fileName = "image.png";
 
-            var embed = new EmbedBuilder()
-            {
-                Title = "picture",
-                Description = "yeet boi",
-                ThumbnailUrl = $"attachment://{fileName}"
-            }.Build();
-            await Context.Channel.SendFileAsync($"pictures/{fileName}", embed: embed);
+            //var embed = new EmbedBuilder()
+            //{
+            //    Title = "picture",
+            //    Description = "yeet boi",
+            //    ThumbnailUrl = $"attachment://{fileName}"
+            //}.Build();
+            //await Context.Channel.SendFileAsync($"pictures/{fileName}", embed: embed);
         }
 
 
