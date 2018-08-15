@@ -14,14 +14,7 @@ namespace Multivac.Commands
 {
     public class InfoCommands : ModuleBase<SocketCommandContext>
     {
-        private readonly DiscordSocketClient _client;
-        private readonly DatabaseHandler _databaseHandler;
-
-        public InfoCommands(DiscordSocketClient client, DatabaseHandler databaseHandler)
-        {
-            _client = client;
-            _databaseHandler = databaseHandler;
-        }
+        public readonly DiscordSocketClient _client;
 
 
         [Command("serverinfo")]

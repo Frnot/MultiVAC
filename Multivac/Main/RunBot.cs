@@ -57,7 +57,6 @@ namespace Multivac.Main
                 .AddSingleton(_dbService)
                 .AddSingleton<InteractiveService>()
                 .AddSingleton<CommandHandler>()
-                .AddSingleton<DatabaseHandler>()
                 .AddSingleton<AudioService>()
                 .BuildServiceProvider();
 
@@ -86,7 +85,7 @@ namespace Multivac.Main
         {
             await _client.SetGameAsync(Variables.ProgramVersion);
             await _lavalinkManager.StartAsync();
-            _services.GetRequiredService<DatabaseHandler>().SyncDatabase(); /////////////////////////
+            Database.SyncDatabase(_client); /////////////////////////
         }
 
         public static Task Log(LogMessage message)

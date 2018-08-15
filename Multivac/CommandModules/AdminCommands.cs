@@ -95,22 +95,5 @@ namespace Multivac.Main
             //await Context.Channel.SendFileAsync($"pictures/{fileName}", embed: embed);
         }
 
-
-        [Command("readtest")]
-        [RequireOwner]
-        public async Task ReadTest()
-        {
-            Console.WriteLine("running ReadTest");
-            using (var db = new LiteDatabase(@"GuildData.db"))
-            {
-                var guilds = db.GetCollection<GuildData>("guilds");
-                foreach (var guild in guilds.FindAll())
-                {
-                    Console.WriteLine($"ID: {guild.Id}" +
-                        $"Guild ID: {guild.GuildId}" +
-                        $"Guild Prefix: {guild.CommandPrefix}");
-                }
-            }
-        }
     } // end class AdminCommands
 }

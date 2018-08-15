@@ -14,14 +14,12 @@ namespace Multivac.Main
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
         private readonly IServiceProvider _services;
-        private readonly LiteDatabase db;
 
-        public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider services, LiteDatabase dbService)
+        public CommandHandler(DiscordSocketClient client, CommandService commands, IServiceProvider services)
         {
             _client = client;
             _commands = commands;
             _services = services;
-            db = dbService;
         } // end Constructor
 
         public async Task InitializeCommandsAsync()
@@ -55,9 +53,7 @@ namespace Multivac.Main
 
         public string GetGuildPrefix(ulong guildId)
         {
-            var guilds = db.GetCollection<GuildData>("guilds");
-
-            var guild = guilds.FindOne(x => x.GuildId == guildId);
+            var guild = Database.Load(guildId);
 
             var thisGuildPrefix = guild.CommandPrefix;
 
@@ -68,8 +64,7 @@ namespace Multivac.Main
         {
             if (string.IsNullOrEmpty(newPrefix)) return;
 
-            var guildList = db.GetCollection<GuildData>("guilds");
-            var thisGuild = guildList.FindOne(x => x.GuildId == Context.Guild.Id);
+            var thisGuild = Database.Load(Context.Guild.Id);
 
             if (newPrefix.ToLower().Equals("reset"))
             {
@@ -81,7 +76,7 @@ namespace Multivac.Main
                 thisGuild.CommandPrefix = newPrefix;
                 await Context.Channel.SendMessageAsync($"the command prefix has been changed.");
             }
-            guildList.Update(thisGuild);
+            Database.Save(thisGuild);
 
             await Context.Channel.SendMessageAsync($"the command prefix for {Context.Guild.Name} is now `{GetGuildPrefix(Context.Guild.Id)}`");
         } // end ChangeGuildPrefixAsync

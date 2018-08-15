@@ -18,6 +18,8 @@ namespace Multivac.CommandModules
         {
             var user = Context.User as SocketGuildUser;
 
+            //check if guild is allowed
+
             if (user.Roles.Max(r => r.Position) > Context.Guild.CurrentUser.Roles.Max(r => r.Position))
             {
                 await ReplyAsync(embed: new EmbedBuilder().AddField("Error: lack required permissions", "I cannot manipulate roles above mine").Build());
