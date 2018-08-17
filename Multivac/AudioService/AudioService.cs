@@ -70,7 +70,8 @@ namespace Multivac.Main
             await value.boundChannel.SendMessageAsync($"Searching for: \"{input}\"");
             Console.WriteLine($"searching for exactly: {siteSpecifier}{searchTerm}");
 
-            var newTrack = await _lavalinkManager.GetTrackAsync($"{siteSpecifier}{searchTerm}");
+            var response = await _lavalinkManager.GetTracksAsync($"{siteSpecifier}{searchTerm}");
+            var newTrack = response.Tracks.First();
 
             value.Tracklist.Enqueue((newTrack, Context.User.Id));
 

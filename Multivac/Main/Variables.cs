@@ -7,7 +7,7 @@ namespace Multivac
 {
     public class Variables
     {
-        public readonly static string ProgramVersion = "4.2.0-RC1";
+        public readonly static string ProgramVersion = "5.0.0-RC1";
 
         public static string DiscordToken { get; private set; }
         public static string DefaultCommandPrefix { get; private set; }

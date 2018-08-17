@@ -1,17 +1,31 @@
 ﻿using Discord.Commands;
 using Discord;
-using System;
 using System.Threading.Tasks;
-using LiteDB;
-using Multivac.Data;
-using System.IO;
 using Discord.WebSocket;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using System;
+using Microsoft.CodeAnalysis.Scripting;
+using Multivac.Utilities;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Multivac.Main
 {
     public class AdminCommands : ModuleBase<SocketCommandContext>
     {
         public CommandHandler _commandHandler { get; set; }
+
+        [Command("eval")]
+        [RequireOwner]
+        public async Task Eval([Remainder] string input)
+        {
+            var pattern = new Regex("```(?i)(cs)?(?s)(.*)```");
+            string evalString = pattern.Match(input).Groups[2].Value;
+
+            if (evalString == null) return;
+
+            await EvalService.EvaluateAsync(evalString, Context);
+        } // end Eval
 
         [Command("nuke")]
         [RequireUserPermission(ChannelPermission.ManageChannels, Group = "perms")]
@@ -93,6 +107,8 @@ namespace Multivac.Main
             //    ThumbnailUrl = $"attachment://{fileName}"
             //}.Build();
             //await Context.Channel.SendFileAsync($"pictures/{fileName}", embed: embed);
+            
+            
         }
 
     } // end class AdminCommands
