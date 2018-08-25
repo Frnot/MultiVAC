@@ -1,6 +1,7 @@
 *.csproj*
 *.sln
 *.vs
+*.vscode
 bin
 obj
 Properties

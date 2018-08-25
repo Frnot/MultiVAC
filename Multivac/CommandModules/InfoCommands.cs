@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Multivac.Data;
+using Multivac.Main;
 using Multivac.Utilities;
 using System;
 using System.Diagnostics;
@@ -14,8 +15,7 @@ namespace Multivac.Commands
 {
     public class InfoCommands : ModuleBase<SocketCommandContext>
     {
-        public readonly DiscordSocketClient _client;
-
+        public CommandHandler _commandHandler { get; set; }
 
         [Command("serverinfo")]
         [Alias("guildinfo")]
@@ -23,15 +23,15 @@ namespace Multivac.Commands
         {
             var guild = Context.Guild;
             var embed = new EmbedBuilder();
+            DateTimeConversion.VoiceRegionToTimeZone(Context.Guild.VoiceRegionId, out string timezone, out int offset);
 
-            embed.WithAuthor($"Server Info:");
-            embed.Title = guild.Name;
+            embed.WithTitle($"Server Info for **{guild.Name}**");
             embed.ThumbnailUrl = guild.IconUrl;
             embed.AddField(x =>
             {
                 x.Name = "Server Age";
-                x.Value = $"{DatesAndTime.YearsSince(guild.CreatedAt)}, {DatesAndTime.DaysSince(guild.CreatedAt)} old\n" +
-                          $"This server was created on {guild.CreatedAt.DateTime.ToShortDateString()} at {guild.CreatedAt.DateTime.ToShortTimeString()}";
+                x.Value = $"{DateTimeConversion.YearsSince(guild.CreatedAt)}, {DateTimeConversion.DaysSince(guild.CreatedAt)} old\n" +
+                          $"This server was created on {guild.CreatedAt.DateTime.AddHours(offset).ToShortDateString()} at {guild.CreatedAt.DateTime.AddHours(offset).ToShortTimeString()} ({timezone})";
             });
             embed.AddField(x =>
             {
@@ -44,29 +44,63 @@ namespace Multivac.Commands
             {
                 x.Name = "Bot Specific Server Info";
                 x.Value = $"Bot added: {Context.Guild.CurrentUser.JoinedAt.Value.DateTime.ToShortDateString()}\n" + //how long bot has been in this guild
-                          $"Command Prefix: `//todo`\n";
-
-
+                          $"Command Prefix: `{_commandHandler.GetGuildPrefix(guild.Id)}`\n";
             });
 
             await Context.Channel.SendMessageAsync("", embed: embed.Build());
         } // end GuildInfo
 
-        
+
 
         [Command("userinfo")]
-        public async Task UserInfo(string input = null)
+        [Alias("user")]
+        public async Task UserInfo(IUser userIn = null)
         {
-            SocketGuildUser user;
-            if (input == null) user = Context.Message.Author as SocketGuildUser;
-            else
+
+            DateTimeConversion.VoiceRegionToTimeZone(Context.Guild.VoiceRegionId, out string timezone, out int offset);
+
+
+            SocketGuildUser user = (SocketGuildUser)userIn ?? (SocketGuildUser)Context.User;
+
+            var embed = new EmbedBuilder();
+
+            embed.WithTitle($"{user.Username}#{user.Discriminator}'s Info:");
+            embed.ThumbnailUrl = user.GetAvatarUrl();
+
+            if (user.Nickname != null)
             {
-                //var u = MentionParser.GetUserFromString(Context.Guild, input);
-                //if (u != null) user = u;
-                //else return; //error
+                embed.AddField(x =>
+                {
+                    x.Name = "Nickname";
+                    x.Value = $"{user.Nickname}";
+                });
             }
 
-            //await ReplyAsync($"@{user.Username}'s account was created on {user.CreatedAt})");
+            embed.AddField(x =>
+            {
+                x.Name = "Status";
+                x.Value = user.Status;
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "Account Created";
+                DateTime created = user.CreatedAt.UtcDateTime.AddHours(offset);
+                x.Value = $"{created.ToShortDateString()} at {created.ToShortTimeString()} ({timezone})";
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "Joined";
+                DateTime joindate = ((DateTimeOffset)user.JoinedAt).UtcDateTime.AddHours(offset);
+                x.Value = $"{joindate.ToShortDateString()} at {joindate.ToShortTimeString()} ({timezone})";
+            });
+            embed.AddField(x =>
+            {
+                x.Name = "Roles";
+                x.Value = string.Join(", ", user.Roles);
+            });
+            embed.WithFooter($"ID: {user.Id}");
+
+            await Context.Channel.SendMessageAsync("", embed: embed.Build());
         } // end UserInfo
 
         [Command("whojoined")]
@@ -129,6 +163,7 @@ namespace Multivac.Commands
         [Command("latency", RunMode = RunMode.Async)]
         [Alias("ping", "pong", "rtt")]
         [Summary("Returns the current estimated round-trip latency over WebSocket")]
+        //I didnt write this. I have no clue how it works. Im not even sure if it works correctly.
         public async Task Latency()
         {
             ulong target = 0;
@@ -167,5 +202,6 @@ namespace Multivac.Commands
             s.Stop();
             await m.ModifyAsync(x => x.Content = $"heartbeat: {latency}ms, init: {init}ms, rtt: timeout");
         } // end Ping
+
     }
 }

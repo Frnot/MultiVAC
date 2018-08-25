@@ -31,7 +31,6 @@ namespace Multivac.Utilities
                 Context = context
             };
 
-
             try
             {
                 var result = await CSharpScript.EvaluateAsync($"{string.Join(" ", references.Select(x => $"using {x};"))} {evalstring}", scriptOptions, globals);

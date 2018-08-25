@@ -54,7 +54,7 @@ namespace Multivac.CommandModules
             if (Context.Guild.Roles.Any(r => r.Name == $"#{input}"))
             {
                 Console.WriteLine("role exists!");
-                var role = Context.Guild.Roles.First(r => r.Name == $"#{input}");
+                var role = Context.Guild.Roles.Single(r => r.Name == $"#{input}");
                 await user.AddRoleAsync(role);
 
                 return role;
@@ -81,7 +81,8 @@ namespace Multivac.CommandModules
 
         public async Task RemoveColor(SocketGuildUser user)
         {
-            var role = user.Roles.Where(r => HexRegex.IsMatch(r.Name)).FirstOrDefault();
+            //var role = user.Roles.Where(r => HexRegex.IsMatch(r.Name)).FirstOrDefault();
+            var role = user.Roles.Single(r => HexRegex.IsMatch(r.Name));
 
             if (role == null) return;
 
