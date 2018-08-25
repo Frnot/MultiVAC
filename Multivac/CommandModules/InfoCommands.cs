@@ -119,7 +119,6 @@ namespace Multivac.Commands
         }
 
         [Command("sysinfo")]
-        [Alias("botinfo")]
         public async Task SystemInfo()
         {
             var embed = new EmbedBuilder();
@@ -159,6 +158,27 @@ namespace Multivac.Commands
 
             await Context.Channel.SendMessageAsync("", embed: embed.Build());
         } // end SystemInfo
+
+        [Command("botinfo")]
+        public async Task BotInfo()
+        {
+            var embed = new EmbedBuilder();
+
+            embed.WithAuthor(x =>
+            {
+                x.Name = $"MultiVAC version {Variables.ProgramVersion}";
+                x.Url = "https://discordapp.com/oauth2/authorize?client_id=453744121845383175&scope=bot&permissions=536341840";
+                x.IconUrl = Context.Client.CurrentUser.GetAvatarUrl();
+            });
+
+            embed.WithDescription($"[Invite Link](https://discordapp.com/oauth2/authorize?client_id=453744121845383175&scope=bot&permissions=536341840)\n" +
+                $"[Origin of MultiVAC](https://en.wikipedia.org/wiki/Multivac)\n" +
+                $"Created by Frnot");
+
+            embed.WithFooter("ONLINE: 26.05.2018•01:34");
+
+            await Context.Channel.SendMessageAsync("", embed: embed.Build());
+        }
 
         [Command("latency", RunMode = RunMode.Async)]
         [Alias("ping", "pong", "rtt")]
