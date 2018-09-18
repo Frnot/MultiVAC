@@ -38,11 +38,11 @@ namespace Multivac.Main
 
             _lavalinkManager = lavalinkManager ?? new LavalinkManager(_client, new LavalinkManagerConfig()
             {
-                //RESTHost = "localhost",
-                RESTHost = "127.0.0.1",
+                RESTHost = "localhost",
+                //RESTHost = "127.0.0.1",
                 RESTPort = 2333,
-                //WebSocketHost = "localhost",
-                WebSocketHost = "127.0.0.1",
+                WebSocketHost = "localhost",
+                //WebSocketHost = "127.0.0.1",
                 WebSocketPort = 80,
                 Authorization = "yeet",
                 //TotalShards = 1
@@ -104,7 +104,7 @@ namespace Multivac.Main
                     break;
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.ForegroundColor = ConsoleColor.Gray;
                     break;
             }
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");

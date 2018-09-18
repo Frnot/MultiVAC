@@ -31,6 +31,10 @@ namespace Multivac.Commands
         public async Task StopMusic()
             => await _audioService.StopMusicAsync(Context.Guild.Id);
 
+        [Command("clearqueue")]
+        public async Task ClearTrackList()
+            => await _audioService.ClearTracklist(Context.Guild.Id);
+
         [Command("restart")]
         public async Task RestartSong()
             => await _audioService.RestartSongAsync(Context);

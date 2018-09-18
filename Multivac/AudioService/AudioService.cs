@@ -75,6 +75,11 @@ namespace Multivac.Main
 
             value.Tracklist.Enqueue((newTrack, Context.User.Id));
 
+            Console.WriteLine($"tracklist has item?: {value.Tracklist.Any()}");
+            Console.WriteLine($"first track title: {value.Tracklist.First().track.Title}");
+
+            Console.WriteLine($"play exists? player is playing: {player.Playing}");
+
             if (value.IsPlaying)
             {
                 await value.boundChannel.SendMessageAsync(embed: new EmbedBuilder()
@@ -87,10 +92,21 @@ namespace Multivac.Main
             }
             else
             {
-                value.IsPlaying = true;
-                GuildPlaylist.AddOrUpdate(Context.Guild.Id, value, (key, val) => value);
+                Console.WriteLine("not playing, will start");
+                var track = value.Tracklist.Dequeue().track;
+                Console.WriteLine($"track to play {track.Title}");
 
-                await player.PlayAsync(value.Tracklist.Dequeue().track);
+                await player.PlayAsync(track);
+                Console.WriteLine("playing");
+
+                value.IsPlaying = true;
+                Console.WriteLine("updated status");
+
+                GuildPlaylist.AddOrUpdate(Context.Guild.Id, value, (key, val) => value);
+                Console.WriteLine("saved status");
+
+                Console.WriteLine($"title: {newTrack.Title}");
+                Console.WriteLine($"length: {newTrack.Length}");
 
                 await value.boundChannel.SendMessageAsync(embed: new EmbedBuilder()
                     .AddField("Playing Music",
@@ -133,6 +149,14 @@ namespace Multivac.Main
             value.Tracklist.Clear();
             value.IsPlaying = false;
             GuildPlaylist.AddOrUpdate(guildId, value, (key, val) => value);
+        }
+
+        public async Task ClearTracklist(ulong guildId)
+        {
+            GuildPlaylist.TryGetValue(guildId, out var value);
+            value.Tracklist.Clear();
+            GuildPlaylist.AddOrUpdate(guildId, value, (key, val) => value);
+            await value.boundChannel.SendMessageAsync("tracklist cleared");
         }
 
         public async Task RestartSongAsync(SocketCommandContext Context)
@@ -188,7 +212,10 @@ namespace Multivac.Main
         public async Task DisconnectAsync(ulong guildId)
         {
             var player = _lavalinkManager.GetPlayer(guildId);
-            await player.DisconnectAsync();
+            if (player.Playing)
+            {
+                await player.DisconnectAsync();
+            }
         }
 
         public async Task SetVolumeAsync(ulong guildId, int volume)
