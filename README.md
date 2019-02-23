@@ -1,3 +1,3 @@
 # MultiVACBot
 
-Soon the be the best Discord bot
+Update to d-api version 3 coming soon!...?
